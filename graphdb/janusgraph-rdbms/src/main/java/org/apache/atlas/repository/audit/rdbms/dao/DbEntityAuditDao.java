@@ -23,10 +23,17 @@ import org.apache.commons.collections.CollectionUtils;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class DbEntityAuditDao extends BaseDao<DbEntityAudit> {
+    private static final Set<String> ALLOWED_SORT_COLUMNS = new HashSet<>(Arrays.asList(
+            "id", "entityId", "eventTime", "eventIndex", "user", "action", "details", "entity", "auditType"
+    ));
+
     public DbEntityAuditDao(EntityManager em) {
         super(em);
     }
@@ -91,7 +98,11 @@ public class DbEntityAuditDao extends BaseDao<DbEntityAudit> {
     public String getOrderByQuery(List<String> sortByColumn, boolean sortOrderDesc) {
         StringBuilder orderByQuery = new StringBuilder(" ORDER BY ");
         for (int i = 0; i < sortByColumn.size(); i++) {
-            orderByQuery.append("e.").append(sortByColumn.get(i));
+            String column = sortByColumn.get(i);
+            if (!ALLOWED_SORT_COLUMNS.contains(column)) {
+                throw new IllegalArgumentException("Invalid sort column: " + column);
+            }
+            orderByQuery.append("e.").append(column);
             orderByQuery.append(sortOrderDesc ? " DESC" : " ASC");
             if (i != sortByColumn.size() - 1) {
                 orderByQuery.append(", ");
@@ -113,19 +124,15 @@ public class DbEntityAuditDao extends BaseDao<DbEntityAudit> {
                         .getResultList();
             } else {
                 if (CollectionUtils.isNotEmpty(filterActions)) {
-                    query.append(" and e.action NOT IN (");
-                    for (int i = 0; i < filterActions.size(); i++) {
-                        query.append("'").append(filterActions.get(i)).append("'");
-                        if (i != filterActions.size() - 1) {
-                            query.append(", ");
-                        }
-                    }
-                    query.append(")");
+                    query.append(" and e.action NOT IN (:filterActions)");
                 }
                 query.append(" ORDER BY e.eventTime DESC, e.eventIndex DESC");
-                return em.createQuery(query.toString(), DbEntityAudit.class)
-                        .setParameter("entityId", entityId)
-                        .getResultList();
+                javax.persistence.TypedQuery<DbEntityAudit> typedQuery = em.createQuery(query.toString(), DbEntityAudit.class)
+                        .setParameter("entityId", entityId);
+                if (CollectionUtils.isNotEmpty(filterActions)) {
+                    typedQuery.setParameter("filterActions", filterActions);
+                }
+                return typedQuery.getResultList();
             }
         } catch (NoResultException excp) {
             // ignore

@@ -56,9 +56,9 @@ then
 
 atlas.graph.storage.backend=rdbms
 atlas.graph.storage.rdbms.jpa.hikari.driverClassName=org.postgresql.Driver
-atlas.graph.storage.rdbms.jpa.hikari.jdbcUrl=jdbc:postgresql://atlas-db/atlas
-atlas.graph.storage.rdbms.jpa.hikari.username=atlas
-atlas.graph.storage.rdbms.jpa.hikari.password=atlasR0cks!
+atlas.graph.storage.rdbms.jpa.hikari.jdbcUrl=jdbc:postgresql://${ATLAS_DB_HOST:-atlas-db}:${ATLAS_DB_PORT:-5432}/${ATLAS_DB_NAME:-atlas}
+atlas.graph.storage.rdbms.jpa.hikari.username=${ATLAS_DB_USER:-atlas}
+atlas.graph.storage.rdbms.jpa.hikari.password=${ATLAS_DB_PASSWORD:-atlasR0cks!}
 atlas.graph.storage.rdbms.jpa.hikari.maximumPoolSize=40
 atlas.graph.storage.rdbms.jpa.hikari.minimumIdle=5
 atlas.graph.storage.rdbms.jpa.hikari.idleTimeout=300000

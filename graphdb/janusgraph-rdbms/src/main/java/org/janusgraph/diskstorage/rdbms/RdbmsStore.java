@@ -41,7 +41,6 @@ import org.janusgraph.diskstorage.util.StaticArrayEntryList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +61,7 @@ public class RdbmsStore implements KeyColumnValueStore {
     private final String          name;
     private final DaoManager      daoManager;
     private final EntryMetaData[] entryMetaData;
-    private       Long            storeId;
+    private volatile Long            storeId;
 
     public RdbmsStore(String name, RdbmsStoreManager storeManager) {
         LOG.info("RdbmsStore(name={})", name);
@@ -233,6 +232,12 @@ public class RdbmsStore implements KeyColumnValueStore {
             ret = dao.getIdByName(name);
 
             for (int attempt = 1; ret == null; attempt++) {
+                ret = new JanusStoreDao((RdbmsTransaction) trx).getIdByName(name);
+
+                if (ret != null) {
+                    break;
+                }
+
                 try (RdbmsTransaction trx2 = new RdbmsTransaction(trx.getConfiguration(), daoManager)) {
                     JanusStoreDao dao2  = new JanusStoreDao(trx2);
                     JanusStore    store = dao2.create(new JanusStore(name));
@@ -242,7 +247,8 @@ public class RdbmsStore implements KeyColumnValueStore {
                     ret = store != null ? store.getId() : null;
 
                     LOG.debug("attempt #{}: created store(name={}): id={}", attempt, name, ret);
-                } catch (IOException excp) {
+                } catch (Exception excp) {
+                    LOG.warn("attempt #{}: failed to create store(name={}), will retry lookup", attempt, name);
                     LOG.error("attempt #{}: failed to create store(name={})", attempt, name, excp);
                 }
 
@@ -274,6 +280,12 @@ public class RdbmsStore implements KeyColumnValueStore {
         Long        ret     = dao.getIdByStoreIdAndName(storeId, key);
 
         for (int attempt = 1; ret == null; attempt++) {
+            ret = new JanusKeyDao((RdbmsTransaction) trx).getIdByStoreIdAndName(storeId, key);
+
+            if (ret != null) {
+                break;
+            }
+
             try (RdbmsTransaction trx2 = new RdbmsTransaction(trx.getConfiguration(), daoManager)) {
                 JanusKeyDao dao2       = new JanusKeyDao(trx2);
                 JanusKey    createdKey = dao2.create(new JanusKey(storeId, key));
@@ -284,6 +296,7 @@ public class RdbmsStore implements KeyColumnValueStore {
 
                 LOG.debug("attempt #{}: created key(storeId={}, key={}): id={}", attempt, storeId, key, ret);
             } catch (Throwable t) {
+                LOG.warn("attempt #{}: failed to create key(storeId={}, key=...), will retry lookup", attempt, storeId);
                 LOG.error("attempt #{}: failed to create key(storeId={}, key.length={}, key={}): {}", attempt, storeId, key.length, new String(key), t);
             }
 

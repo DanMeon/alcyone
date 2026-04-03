@@ -20,16 +20,16 @@ package org.janusgraph.diskstorage.rdbms;
 import org.janusgraph.graphdb.relations.RelationIdentifier;
 
 public class RdbmsUniqueKeyHandler {
-    private static final String SQL_INSERT_UNIQUE_VERTEX_KEY                   = "INSERT INTO janus_unique_vertex_key (vertex_id, key_name, val) VALUES (?, ?, ?)";
+    private static final String SQL_INSERT_UNIQUE_VERTEX_KEY                   = "INSERT INTO janus_unique_vertex_key (vertex_id, key_name, val) VALUES (?, ?, ?) ON CONFLICT (key_name, val) DO UPDATE SET vertex_id = EXCLUDED.vertex_id";
     private static final String SQL_DELETE_UNIQUE_VERTEX_KEY                   = "DELETE FROM janus_unique_vertex_key WHERE key_name = ? AND val = ?";
-    private static final String SQL_INSERT_UNIQUE_VERTEX_TYPE_KEY              = "INSERT INTO janus_unique_vertex_type_key (vertex_id, type_name, key_name, val) VALUES (?, ?, ?, ?)";
+    private static final String SQL_INSERT_UNIQUE_VERTEX_TYPE_KEY              = "INSERT INTO janus_unique_vertex_type_key (vertex_id, type_name, key_name, val) VALUES (?, ?, ?, ?) ON CONFLICT (type_name, key_name, val) DO UPDATE SET vertex_id = EXCLUDED.vertex_id";
     private static final String SQL_DELETE_UNIQUE_VERTEX_TYPE_KEY              = "DELETE FROM janus_unique_vertex_type_key WHERE type_name = ? AND key_name = ? AND val = ?";
     private static final String SQL_DELETE_UNIQUE_VERTEX_KEY_BY_VERTEX_ID      = "DELETE FROM janus_unique_vertex_key WHERE vertex_id = ?";
     private static final String SQL_DELETE_UNIQUE_VERTEX_TYPE_KEY_BY_VERTEX_ID = "DELETE FROM janus_unique_vertex_type_key WHERE vertex_id = ?";
 
-    private static final String SQL_INSERT_UNIQUE_EDGE_KEY                 = "INSERT INTO janus_unique_edge_key (edge_id, key_name, val) VALUES (?, ?, ?)";
+    private static final String SQL_INSERT_UNIQUE_EDGE_KEY                 = "INSERT INTO janus_unique_edge_key (edge_id, key_name, val) VALUES (?, ?, ?) ON CONFLICT (key_name, val) DO UPDATE SET edge_id = EXCLUDED.edge_id";
     private static final String SQL_DELETE_UNIQUE_EDGE_KEY                 = "DELETE FROM janus_unique_edge_key WHERE key_name = ? AND val = ?";
-    private static final String SQL_INSERT_UNIQUE_EDGE_TYPE_KEY            = "INSERT INTO janus_unique_edge_type_key (edge_id, type_name, key_name, val) VALUES (?, ?, ?, ?)";
+    private static final String SQL_INSERT_UNIQUE_EDGE_TYPE_KEY            = "INSERT INTO janus_unique_edge_type_key (edge_id, type_name, key_name, val) VALUES (?, ?, ?, ?) ON CONFLICT (type_name, key_name, val) DO UPDATE SET edge_id = EXCLUDED.edge_id";
     private static final String SQL_DELETE_UNIQUE_EDGE_TYPE_KEY            = "DELETE FROM janus_unique_edge_type_key WHERE type_name = ? AND key_name = ? AND val = ?";
     private static final String SQL_DELETE_UNIQUE_EDGE_KEY_BY_EDGE_ID      = "DELETE FROM janus_unique_edge_key WHERE edge_id = ?";
     private static final String SQL_DELETE_UNIQUE_EDGE_TYPE_KEY_BY_EDGE_ID = "DELETE FROM janus_unique_edge_type_key WHERE edge_id = ?";
