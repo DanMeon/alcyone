@@ -27,9 +27,9 @@ fi
 
 if [ "${SETUP_ATLAS}" == "true" ]
 then
-  encryptedPwd=$(${ATLAS_HOME}/bin/cputil.py -g -u admin -p atlasR0cks! -s | tail -1)
+  encryptedPwd=$(${ATLAS_HOME}/bin/cputil.py -g -u ${ATLAS_ADMIN_USER:-admin} -p ${ATLAS_ADMIN_PASSWORD:-atlasR0cks!} -s | tail -1)
 
-  echo "admin=ADMIN::${encryptedPwd}" > ${ATLAS_HOME}/conf/users-credentials.properties
+  echo "${ATLAS_ADMIN_USER:-admin}=ADMIN::${encryptedPwd}" > ${ATLAS_HOME}/conf/users-credentials.properties
 
   sed -i "s/atlas.graph.storage.hostname=.*$/atlas.graph.storage.hostname=atlas-zk.example.com:2181/"             /opt/atlas/conf/atlas-application.properties
   sed -i "s/atlas.audit.hbase.zookeeper.quorum=.*$/atlas.audit.hbase.zookeeper.quorum=atlas-zk.example.com:2181/" /opt/atlas/conf/atlas-application.properties

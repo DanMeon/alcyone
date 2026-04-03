@@ -15,78 +15,72 @@ specific language governing permissions and limitations
 under the License.
 -->
 
-Apache Atlas Overview
-=====================
+# Alcyone
+
 [![License](https://img.shields.io/:license-Apache%202-green.svg)](https://www.apache.org/licenses/LICENSE-2.0.txt)
-[![PyPI Downloads](https://static.pepy.tech/personalized-badge/apache-atlas?period=month&units=international_system&left_color=black&right_color=orange&left_text=PyPI%20downloads)](https://pypi.org/project/apache-atlas/)
-[![Documentation](https://img.shields.io/badge/docs-apache.org-blue.svg)](https://atlas.apache.org)
-[![Wiki](https://img.shields.io/badge/atlas-wiki-orange)](https://cwiki.apache.org/confluence/display/ATLAS/)
 
-Apache Atlas framework is an extensible set of core
-foundational governance services – enabling enterprises to effectively and
-efficiently meet their compliance requirements within Hadoop and allows
-integration with the whole enterprise data ecosystem.
+[Apache Atlas 2.5.0-rc0](https://github.com/apache/atlas) fork with PostgreSQL backend bug fixes for production use.
 
-This will provide true visibility in Hadoop by using both a prescriptive
-and forensic model, along with technical and operational audit as well as
-lineage enriched by business taxonomical metadata.  It also enables any
-metadata consumer to work inter-operably without discrete interfaces to
-each other -- the metadata store is common.
+## What's Different from Upstream
 
-The metadata veracity is maintained by leveraging Apache Ranger to prevent
-non-authorized access paths to data at runtime.
-Security is both role based (RBAC) and attribute based (ABAC).
+| Severity | File | Fix |
+|----------|------|-----|
+| CRITICAL | `RdbmsUniqueKeyHandler.java` | INSERT to upsert (ON CONFLICT DO UPDATE) for all 4 unique key tables |
+| CRITICAL | `RdbmsStore.java` | `getStoreIdOrCreate()` race condition: re-query before create, catch Exception |
+| CRITICAL | `RdbmsStore.java` | `getKeyIdOrCreate()` race condition: same pattern |
+| HIGH | `RdbmsStore.java` | `storeId` field marked `volatile` for thread visibility |
+| HIGH | `atlas.sh` | DB connection values parameterized via environment variables |
+| MEDIUM | `DbEntityAuditDao.java` | JPQL injection fix: whitelist validation + parameterized queries |
+| BUG | `AtlasJanusGraphDatabase.java` | Java 17 compatibility: VarHandle-based `removeFinalModifier()` with legacy fallback |
 
+## Quick Start
 
+```bash
+# 1. Configure
+cp .env.example .env
+# Edit .env as needed (DB host, credentials, etc.)
 
-#### NOTE
-Apache Atlas allows contributions via pull requests (PRs) on GitHub. Alternatively, use [this](https://reviews.apache.org) to submit changes for review using the Review Board.
-Also create a [atlas jira](https://issues.apache.org/jira/browse/ATLAS) to go along with the review and mention it in the pull request/review board review.
+# 2. Build (30min~1hr on first run)
+./setup.sh
 
+# 3. Run
+docker compose up -d
 
-Building Atlas in Docker
-=============
+# 4. Access
+# http://localhost:21000
+# Default: admin / atlasR0cks!
+```
 
-Instructions to build and run atlas in docker: `dev-support/atlas-docker/README.md`
+## Environment Variables
 
-Regular Build Process
-=============
+### PostgreSQL
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ATLAS_DB_HOST` | `atlas-db` | PostgreSQL host |
+| `ATLAS_DB_PORT` | `5432` | PostgreSQL port |
+| `ATLAS_DB_NAME` | `atlas` | Database name |
+| `ATLAS_DB_USER` | `atlas` | Database user |
+| `ATLAS_DB_PASSWORD` | `atlasR0cks!` | Database password |
 
-1. Get Atlas sources to your local directory, for example with following commands
-   ```
-   cd <your-local-directory>
-   git clone https://github.com/apache/atlas.git
-   cd atlas
-   
-   # Checkout the branch or tag you would like to build
+### Atlas Admin
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ATLAS_ADMIN_USER` | `admin` | Web UI admin username |
+| `ATLAS_ADMIN_PASSWORD` | `atlasR0cks!` | Web UI admin password |
 
-   # to checkout a branch
-   git checkout <branch>
+### Build
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ATLAS_BASE_JAVA_VERSION` | `11` | Java version for base image |
+| `ATLAS_BUILD_JAVA_VERSION` | `11` | Java version for Maven build |
+| `ATLAS_SERVER_JAVA_VERSION` | `11` | Java version for runtime |
 
-   # to checkout a tag
-   git checkout tags/<tag>
-   ```
+## Known Limitations
 
-2. Execute the following commands to build Apache Atlas
-   ```
-   export MAVEN_OPTS="-Xms2g -Xmx2g"
-   mvn clean install
-   mvn clean package -Pdist
-   ```
+1. **PostgreSQL only** -- ON CONFLICT syntax is PostgreSQL-specific
+2. **Java 11 recommended** -- Java 17 works with graceful fallback but requires `--add-opens` flag
+3. **React UI incomplete** -- Legacy UI (`/index.html`) only; new UI (`/n/index.html`) not functional
 
-4. After above build commands successfully complete, you should see the following files
-   ```
-   distro/target/apache-atlas-<version>-bin.tar.gz
-   distro/target/apache-atlas-<version>-hbase-hook.tar.gz
-   distro/target/apache-atlas-<version>-hive-hook.tar.gz
-   distro/target/apache-atlas-<version>-impala-hook.tar.gz
-   distro/target/apache-atlas-<version>-kafka-hook.tar.gz
-   distro/target/apache-atlas-<version>-server.tar.gz
-   distro/target/apache-atlas-<version>-sources.tar.gz
-   distro/target/apache-atlas-<version>-sqoop-hook.tar.gz
-   distro/target/apache-atlas-<version>-storm-hook.tar.gz
-   distro/target/apache-atlas-<version>-falcon-hook.tar.gz
-   distro/target/apache-atlas-<version>-couchbase-hook.tar.gz
-   ```
+## License
 
-5. For more details on installing and running Apache Atlas, please refer to https://atlas.apache.org/#/Installation
+Apache License 2.0. Forked from [Apache Atlas](https://github.com/apache/atlas) `release-2.5.0-rc0`.

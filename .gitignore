@@ -79,3 +79,8 @@ distro/solr/*.tgz
 
 # webapp
 /webapp/overlays/
+
+.env
+CLAUDE.md
+
+.serena/

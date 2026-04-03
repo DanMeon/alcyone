@@ -23,7 +23,7 @@ fi
 
 if [ "${GIT_URL}" == "" ]
 then
-  GIT_URL=https://github.com/apache/atlas.git
+  GIT_URL=https://github.com/DanMeon/alcyone.git
 fi
 
 if [ "${PROFILE}" != "" ]
@@ -43,7 +43,7 @@ then
   BUILD_HOST_SRC=true
 fi
 
-export MAVEN_OPTS="-Xms2g -Xmx2g"
+export MAVEN_OPTS="-Xms2g -Xmx4g"
 export M2=/home/atlas/.m2
 
 
@@ -86,7 +86,7 @@ else
   done
 fi
 
-mvn ${ARG_PROFILES} ${ARG_SKIPTESTS} -DskipDocs clean verify --no-transfer-progress -B -V
+mvn -T 1C ${ARG_PROFILES} ${ARG_SKIPTESTS} -DskipDocs clean verify --no-transfer-progress -B -V
 
 status=$?
 
