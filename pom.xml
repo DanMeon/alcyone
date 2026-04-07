@@ -1431,6 +1431,10 @@
                         <exclude>.svn/**</exclude>
                         <exclude>.git/**</exclude>
                         <exclude>.github/pull_request_template.md</exclude>
+                        <exclude>.github/workflows/**</exclude>
+                        <exclude>docker-compose.yml</exclude>
+                        <exclude>justfile</exclude>
+                        <exclude>.env.example</exclude>
                         <exclude>.gitignore</exclude>
                         <exclude>**/.idea/**</exclude>
                         <exclude>**/*.twiki</exclude>
