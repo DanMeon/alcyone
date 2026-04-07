@@ -1435,6 +1435,7 @@
                         <exclude>docker-compose.yml</exclude>
                         <exclude>justfile</exclude>
                         <exclude>.env.example</exclude>
+                        <exclude>setup.sh</exclude>
                         <exclude>.gitignore</exclude>
                         <exclude>**/.idea/**</exclude>
                         <exclude>**/*.twiki</exclude>
