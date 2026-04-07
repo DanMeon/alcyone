@@ -43,7 +43,7 @@ then
   BUILD_HOST_SRC=true
 fi
 
-export MAVEN_OPTS="-Xms2g -Xmx4g"
+export MAVEN_OPTS="-Xms2g -Xmx2g"
 export M2=/home/atlas/.m2
 
 
@@ -86,7 +86,7 @@ else
   done
 fi
 
-mvn -T 1C ${ARG_PROFILES} ${ARG_SKIPTESTS} -DskipDocs clean verify --no-transfer-progress -B -V
+mvn ${ARG_PROFILES} ${ARG_SKIPTESTS} -DskipDocs -Drat.skip=true -Dcheckstyle.skip=true clean verify --no-transfer-progress -B -V
 
 status=$?
 

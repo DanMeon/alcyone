@@ -63,6 +63,7 @@ build_images() {
     echo "============================================"
     echo " Step 2/4: Atlas 소스 빌드 (Maven, 시간 소요)"
     echo "============================================"
+    docker compose -f docker-compose.atlas-build.yml build atlas-build
     docker compose -f docker-compose.atlas-build.yml run --rm atlas-build
 
     echo ""
@@ -108,7 +109,7 @@ build_images() {
     echo ""
     echo "Atlas Web UI:"
     echo "  http://localhost:21000"
-    echo "  ID: admin / PW: atlasR0cks!"
+    echo "  ID: admin / PW: datahub"
     echo ""
 }
 
