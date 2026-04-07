@@ -82,5 +82,5 @@ fi
 su -c "cd ${ATLAS_HOME}/bin && ./atlas_start.py" atlas
 ATLAS_PID=`ps -ef  | grep -v grep | grep -i "org.apache.atlas.Atlas" | awk '{print $2}'`
 
-# prevent the container from exiting
-tail --pid=$ATLAS_PID -f /dev/null
+# stream application log to stdout so docker logs can capture it
+tail --pid=$ATLAS_PID -f ${ATLAS_HOME}/logs/application.log

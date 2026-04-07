@@ -1,0 +1,165 @@
+name: Upstream Watch
+
+on:
+  schedule:
+    - cron: '0 23 * * *' # Every day 23:00 UTC (08:00 KST next day)
+  workflow_dispatch: # Manual trigger
+
+concurrency:
+  group: upstream-watch
+  cancel-in-progress: true
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch upstream
+        run: |
+          git remote add upstream https://github.com/apache/atlas.git || true
+          git fetch upstream
+
+      - name: Find tracking branch and check for new commits
+        id: check
+        run: |
+          # Find the best upstream branch to track
+          # Priority: atlas-2.5 (our release line) > master (fallback)
+          TRACK_BRANCH=""
+          for branch in atlas-2.5 master; do
+            if git rev-parse "upstream/$branch" >/dev/null 2>&1; then
+              TRACK_BRANCH="$branch"
+              break
+            fi
+          done
+
+          if [ -z "$TRACK_BRANCH" ]; then
+            echo "No known upstream branch found"
+            echo "has_new=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "track_branch=${TRACK_BRANCH}" >> "$GITHUB_OUTPUT"
+
+          MERGE_BASE=$(git merge-base HEAD "upstream/$TRACK_BRANCH" 2>/dev/null || echo "")
+          if [ -z "$MERGE_BASE" ]; then
+            echo "No common ancestor with upstream/$TRACK_BRANCH"
+            echo "has_new=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          NEW_COUNT=$(git rev-list --count "$MERGE_BASE..upstream/$TRACK_BRANCH")
+          echo "merge_base=${MERGE_BASE}" >> "$GITHUB_OUTPUT"
+          echo "new_count=${NEW_COUNT}" >> "$GITHUB_OUTPUT"
+
+          if [ "$NEW_COUNT" -eq 0 ]; then
+            echo "No new upstream commits"
+            echo "has_new=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Found $NEW_COUNT new commits on upstream/$TRACK_BRANCH"
+            echo "has_new=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Analyze upstream changes with Claude
+        if: steps.check.outputs.has_new == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: |
+            --model claude-sonnet-4-6
+            --max-turns 40
+          prompt: |
+            You are a fork maintenance analyst for the Alcyone project (Apache Atlas fork with PostgreSQL backend fixes).
+
+            ## Context
+            - Alcyone is a fork of apache/atlas (based on 2.5.0-rc0) with critical PostgreSQL patches
+            - Upstream branch being tracked: `upstream/${{ steps.check.outputs.track_branch }}`
+            - Merge base: ${{ steps.check.outputs.merge_base }}
+            - There are ${{ steps.check.outputs.new_count }} new upstream commits since our last sync
+            - All upstream branches are fetched. You can also check other branches/tags
+              (e.g., `git branch -r | grep upstream`, `git tag -l | grep 2.5`)
+
+            ## Fork-critical files (handle with extra care)
+            These files contain our custom patches -- upstream changes to these WILL conflict:
+            - graphdb/janusgraph-rdbms/**/RdbmsUniqueKeyHandler.java (ON CONFLICT upserts)
+            - graphdb/janusgraph-rdbms/**/RdbmsStore.java (race condition fixes)
+            - repository/**/DbEntityAuditDao.java (JPQL injection fix)
+            - graphdb/**/AtlasJanusGraphDatabase.java (Java 17 VarHandle)
+            - dev-support/atlas-docker/scripts/atlas.sh (parameterized DB connection)
+
+            ## Your task
+            1. List all new upstream commits: `git log --oneline ${{ steps.check.outputs.merge_base }}..upstream/${{ steps.check.outputs.track_branch }}`
+               IMPORTANT: Some upstream commits may already be in our fork via squash cherry-picks.
+               Check our commit messages for references: `git log --oneline --grep="cherry-pick" HEAD`
+               and `git log --oneline --grep="ATLAS-" HEAD`. If an upstream commit's ATLAS ticket
+               number appears in our history, mark it as ALREADY APPLIED (not SAFE/REVIEW/CONFLICT).
+            2. For each commit, check which files it touches: `git diff-tree --no-commit-id --name-only -r <sha>`
+            3. For commits touching important areas, read the ACTUAL diff to understand the change:
+               - `git show <sha> -- <file>` to see the full diff of a specific file in a commit
+               - `git show upstream/${{ steps.check.outputs.track_branch }}:<filepath>` to read the upstream version of a file
+               - `git show HEAD:<filepath>` to read our fork's version of a file
+               - Compare both versions when assessing conflict risk
+            4. Categorize each commit:
+               - **SAFE**: Does not touch fork-critical files. Can be cherry-picked without conflict.
+               - **REVIEW**: Touches files near fork-critical areas (same module). Needs manual review.
+                 For REVIEW commits, include a brief explanation of what the upstream change does and
+                 why it might interact with our patches.
+               - **CONFLICT**: Directly modifies fork-critical files. Will likely conflict.
+                 For CONFLICT commits, show the specific lines that conflict with our patches.
+            5. For SAFE commits, also note the module/area affected (e.g., "webapp", "UI", "addons/hive", etc.)
+            6. For the overall recommendation, consider dependency order -- if commit B depends on commit A,
+               they must be cherry-picked together in order.
+
+            ## Output
+            Create a GitHub issue using `gh issue create` with:
+            - Title: "upstream: ${{ steps.check.outputs.new_count }} new commits from apache/atlas (YYYY-MM-DD)"
+              (use today's date)
+            - Label: "upstream" (create the label first if it doesn't exist: `gh label create upstream --color 0E8A16 --description "Upstream sync tracking" --force`)
+            - Body in this format (write in English):
+
+            ```markdown
+            ## Upstream Changes Detected
+
+            **N** new commits detected on apache/atlas `BRANCH` branch.
+            Merge base: `<sha>`
+
+            ## ALREADY APPLIED
+            | Commit | Description | Applied in |
+            |--------|-------------|------------|
+            | `sha` | message | our commit sha |
+
+            ## CONFLICT (likely conflicts)
+            | Commit | Description | Affected files |
+            |--------|-------------|----------------|
+            | `sha` | message | files |
+
+            ## REVIEW (needs manual review)
+            | Commit | Description | Affected module |
+            |--------|-------------|-----------------|
+            | `sha` | message | module |
+
+            ## SAFE (can cherry-pick)
+            | Commit | Description | Affected module |
+            |--------|-------------|-----------------|
+            | `sha` | message | module |
+
+            ## Recommended Actions
+            - (Claude's recommendation on what to cherry-pick and in what order)
+
+            ---
+            _Auto-generated by [upstream-watch](.github/workflows/upstream-watch.yml)_
+            ```
+
+            ## Important
+            - Before creating an issue, check if there's already an open issue with the "upstream" label
+              that covers the same commits (to avoid duplicates): `gh issue list --label upstream --state open`
+            - If a previous issue exists and all commits are already covered, do NOT create a new issue.
+            - If there are additional new commits beyond what's in the existing issue, create a new issue
+              covering ONLY the new commits.
+            - Write the issue body in English.
+            - Use the HEREDOC pattern for gh issue create body to preserve formatting.
