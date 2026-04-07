@@ -17,7 +17,7 @@
 # limitations under the License.
 import os
 import sys
-sys.path.insert(0, '/usr/hdp/current/atlas-server/bin/')
+sys.path.insert(0, os.path.join(os.environ.get('ATLAS_HOME', '/opt/atlas'), 'bin'))
 
 import traceback
 import subprocess
@@ -99,7 +99,7 @@ def main():
 
     if os.path.isfile(atlas_pid_file):
        #Check if process listed in atlas.pid file is still running
-       pf = file(atlas_pid_file, 'r')
+       pf = open(atlas_pid_file, 'r')
        pid = pf.read().strip()
        pf.close()
 

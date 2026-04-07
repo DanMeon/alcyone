@@ -38,6 +38,9 @@ RUN tar xfz /home/atlas/dist/apache-atlas-${ATLAS_VERSION}-server.tar.gz --direc
 
 COPY ./scripts/hbase-site.xml ${ATLAS_HOME}/hbase/conf/
 
+# tools not included in server tarball
+COPY ./dist/tools/ ${ATLAS_HOME}/tools/
+
 VOLUME /home/atlas/data
 
 EXPOSE 21000
