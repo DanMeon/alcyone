@@ -86,7 +86,12 @@ else
   done
 fi
 
-mvn ${ARG_PROFILES} ${ARG_SKIPTESTS} -DskipDocs -Drat.skip=true -Dcheckstyle.skip=true clean verify --no-transfer-progress -B -V
+if [ "${MAVEN_GOAL}" == "" ]
+then
+  MAVEN_GOAL="clean verify"
+fi
+
+mvn ${ARG_PROFILES} ${ARG_SKIPTESTS} -DskipDocs -Drat.skip=true -Dcheckstyle.skip=true ${MAVEN_GOAL} --no-transfer-progress -B -V
 
 status=$?
 

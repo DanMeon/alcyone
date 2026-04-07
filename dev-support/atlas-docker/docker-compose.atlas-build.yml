@@ -23,6 +23,7 @@ services:
       - BRANCH
       - BUILD_HOST_SRC
       - GIT_URL
+      - MAVEN_GOAL
       - PROFILE
       - SKIPTESTS
 

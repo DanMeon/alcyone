@@ -7,7 +7,8 @@ set -euo pipefail
 # 사용법:
 #   ./setup.sh           # 전체 빌드 (다운로드 + 빌드)
 #   ./setup.sh download  # 아카이브 다운로드만
-#   ./setup.sh build     # Docker 이미지 빌드만
+#   ./setup.sh build     # Docker 이미지 빌드만 (clean + 전체)
+#   ./setup.sh rebuild   # 증분 빌드 (clean 없이 변경분만, 빠름)
 #
 # 요구사항:
 #   - Docker Desktop (메모리 6GB 이상 할당 권장)
@@ -64,7 +65,7 @@ build_images() {
     echo " Step 2/4: Atlas 소스 빌드 (Maven, 시간 소요)"
     echo "============================================"
     docker compose -f docker-compose.atlas-build.yml build atlas-build
-    docker compose -f docker-compose.atlas-build.yml run --rm atlas-build
+    MAVEN_GOAL="${MAVEN_GOAL:-clean verify}" docker compose -f docker-compose.atlas-build.yml run --rm atlas-build
 
     echo ""
     echo "============================================"
@@ -123,12 +124,15 @@ case "$COMMAND" in
     build)
         build_images
         ;;
+    rebuild)
+        MAVEN_GOAL="verify" build_images
+        ;;
     all)
         download_archives
         build_images
         ;;
     *)
-        echo "Usage: ./setup.sh [download|build|all]"
+        echo "Usage: ./setup.sh [download|build|rebuild|all]"
         exit 1
         ;;
 esac
