@@ -77,6 +77,9 @@ EOF
   touch ${ATLAS_HOME}/.setupDone
 fi
 
+# ensure atlas user owns data directory (volume may be root-owned)
+chown -R atlas:atlas /home/atlas/data
+
 su -c "cd ${ATLAS_HOME}/bin && ./atlas_start.py" atlas
 ATLAS_PID=`ps -ef  | grep -v grep | grep -i "org.apache.atlas.Atlas" | awk '{print $2}'`
 
