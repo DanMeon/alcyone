@@ -3,15 +3,64 @@
 # 사전 조건: ./setup.sh 로 이미지 빌드 완료
 # .env에서 ATLAS_DB_HOST 등 외부 PostgreSQL 설정 필요
 #
+# 기본: Atlas + Solr만 (내장 Kafka/ZK)
+# 외부 Kafka/ZK 사용: .env에 COMPOSE_PROFILES=kafka 추가
+#
 # Atlas Web UI: http://localhost:21000
-# 기본 계정: admin / atlasR0cks!
 
 services:
-  # * ZooKeeper
+  # * Solr (검색 인덱스)
+  atlas-solr:
+    image: atlas-solr:latest
+    container_name: atlas-solr
+    hostname: atlas-solr.example.com
+    networks:
+      - atlas
+    ports:
+      - "8983:8983"
+    volumes:
+      - atlas-solr-data:/var/solr/data
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8983/solr/admin/info/system?wt=json"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+
+  # * Atlas Server (기본: embedded Kafka/ZK)
+  atlas:
+    image: atlas:latest
+    container_name: atlas
+    hostname: atlas.example.com
+    networks:
+      - atlas
+    volumes:
+      - atlas-data:/home/atlas/data
+    ports:
+      - "21000:21000"
+    depends_on:
+      atlas-solr:
+        condition: service_healthy
+    environment:
+      - ATLAS_SERVER_JAVA_VERSION=${ATLAS_SERVER_JAVA_VERSION:-11}
+      - ATLAS_VERSION=${ATLAS_VERSION:-2.5.0}
+      - ATLAS_DB_HOST=${ATLAS_DB_HOST:-atlas-db}
+      - ATLAS_DB_PORT=${ATLAS_DB_PORT:-5432}
+      - ATLAS_DB_NAME=${ATLAS_DB_NAME:-atlas}
+      - ATLAS_DB_USER=${ATLAS_DB_USER:-atlas}
+      - ATLAS_DB_PASSWORD=${ATLAS_DB_PASSWORD:-atlasR0cks!}
+      - ATLAS_ADMIN_USER=${ATLAS_ADMIN_USER:-admin}
+      - ATLAS_ADMIN_PASSWORD=${ATLAS_ADMIN_PASSWORD:-datahub}
+    restart: unless-stopped
+
+  # * ZooKeeper (optional - COMPOSE_PROFILES=kafka)
   atlas-zk:
     image: atlas-zk:latest
     container_name: atlas-zk
     hostname: atlas-zk.example.com
+    profiles:
+      - kafka
     networks:
       - atlas
     ports:
@@ -26,25 +75,13 @@ services:
       start_period: 20s
     restart: unless-stopped
 
-  # * Solr (검색 인덱스)
-  atlas-solr:
-    image: atlas-solr:latest
-    container_name: atlas-solr
-    hostname: atlas-solr.example.com
-    networks:
-      - atlas
-    ports:
-      - "8983:8983"
-    depends_on:
-      atlas-zk:
-        condition: service_healthy
-    restart: unless-stopped
-
-  # * Kafka (메시지 브로커)
+  # * Kafka (optional - COMPOSE_PROFILES=kafka)
   atlas-kafka:
     image: atlas-kafka:latest
     container_name: atlas-kafka
     hostname: atlas-kafka.example.com
+    profiles:
+      - kafka
     networks:
       - atlas
     ports:
@@ -57,39 +94,9 @@ services:
       - ATLAS_VERSION=${ATLAS_VERSION:-2.5.0}
     restart: unless-stopped
 
-  # * Atlas Server
-  atlas:
-    image: atlas:latest
-    container_name: atlas
-    hostname: atlas.example.com
-    networks:
-      - atlas
-    volumes:
-      - atlas-data:/home/atlas/data
-    ports:
-      - "21000:21000"
-    depends_on:
-      atlas-kafka:
-        condition: service_started
-      atlas-solr:
-        condition: service_started
-      atlas-zk:
-        condition: service_healthy
-    environment:
-      - ATLAS_BACKEND=postgres
-      - ATLAS_SERVER_JAVA_VERSION=${ATLAS_SERVER_JAVA_VERSION:-11}
-      - ATLAS_VERSION=${ATLAS_VERSION:-2.5.0}
-      - ATLAS_DB_HOST=${ATLAS_DB_HOST:-atlas-db}
-      - ATLAS_DB_PORT=${ATLAS_DB_PORT:-5432}
-      - ATLAS_DB_NAME=${ATLAS_DB_NAME:-atlas}
-      - ATLAS_DB_USER=${ATLAS_DB_USER:-atlas}
-      - ATLAS_DB_PASSWORD=${ATLAS_DB_PASSWORD:-atlasR0cks!}
-      - ATLAS_ADMIN_USER=${ATLAS_ADMIN_USER:-admin}
-      - ATLAS_ADMIN_PASSWORD=${ATLAS_ADMIN_PASSWORD:-atlasR0cks!}
-    restart: unless-stopped
-
 volumes:
   atlas-data:
+  atlas-solr-data:
 
 networks:
   atlas:

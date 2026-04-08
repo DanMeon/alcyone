@@ -31,21 +31,6 @@
         </fileSet>
 
         <fileSet>
-            <directory>../docs/target/site</directory>
-            <outputDirectory>docs</outputDirectory>
-        </fileSet>
-
-        <fileSet>
-            <directory>../webapp/target/apidocs</directory>
-            <outputDirectory>docs/api</outputDirectory>
-        </fileSet>
-
-        <fileSet>
-            <directory>../target/site/apidocs</directory>
-            <outputDirectory>docs/apidocs</outputDirectory>
-        </fileSet>
-
-        <fileSet>
             <directory>target/bin</directory>
             <outputDirectory>bin</outputDirectory>
             <fileMode>0755</fileMode>
@@ -89,18 +74,22 @@
                 <exclude>**/**</exclude>
             </excludes>
         </fileSet>
-         <!-- for migration setup -->
+
         <fileSet>
-            <directory>../tools/atlas-migration-exporter</directory>
-            <outputDirectory>tools/migration-exporter</outputDirectory>
+            <directory>../</directory>
+            <outputDirectory>/</outputDirectory>
             <includes>
+                <include>DISCLAIMER.txt</include>
+                <include>NOTICE</include>
+                <include>LICENSE</include>
+                <include>CHANGES.txt</include>
                 <include>README</include>
-                <include>*.py</include>
-                <include>atlas-logback.xml</include>
-                <include>atlas-migration-*.jar</include>
             </includes>
-            <fileMode>0755</fileMode>
-            <directoryMode>0755</directoryMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../src/main/examples</directory>
+            <outputDirectory>examples</outputDirectory>
         </fileSet>
 
         <!-- for classification-updater -->
@@ -120,24 +109,6 @@
             <includes>
                 <include>atlas-classification-updater-${project.version}.jar</include>
             </includes>
-        </fileSet>
-
-
-        <fileSet>
-            <directory>../</directory>
-            <outputDirectory>/</outputDirectory>
-            <includes>
-                <include>DISCLAIMER.txt</include>
-                <include>NOTICE</include>
-                <include>LICENSE</include>
-                <include>CHANGES.txt</include>
-                <include>README</include>
-            </includes>
-        </fileSet>
-
-        <fileSet>
-            <directory>../src/main/examples</directory>
-            <outputDirectory>examples</outputDirectory>
         </fileSet>
 
         <!-- out-of-box-models -->

@@ -92,7 +92,6 @@ build_images() {
     echo " Step 4/4: Atlas Server 이미지 빌드"
     echo "============================================"
     docker build \
-        --build-arg ATLAS_BACKEND=postgres \
         --build-arg ATLAS_SERVER_JAVA_VERSION="${ATLAS_SERVER_JAVA_VERSION}" \
         --build-arg ATLAS_VERSION="${ATLAS_VERSION}" \
         -f Dockerfile.atlas \

@@ -58,9 +58,6 @@ DIST_SRC="distro/target"
 DIST_DST="${DOCKER_DIR}/dist"
 REQUIRED_TARBALLS=(
   "apache-atlas-${ATLAS_VERSION}-server.tar.gz"
-  "apache-atlas-${ATLAS_VERSION}-hive-hook.tar.gz"
-  "apache-atlas-${ATLAS_VERSION}-kafka-hook.tar.gz"
-  "apache-atlas-${ATLAS_VERSION}-hbase-hook.tar.gz"
 )
 
 if [[ ! -d "$DIST_SRC" ]]; then

@@ -24,4 +24,4 @@ EOF
 
 sed -i 's/localhost:2181/atlas-zk.example.com:2181/' /opt/kafka/config/server.properties
 
-chown -R kafka:hadoop /opt/kafka/
+chown -R root:root /opt/kafka/

@@ -16,19 +16,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-service ssh start
-
 if [ ! -e ${KAFKA_HOME}/.setupDone ]
 then
-  su -c "ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa" kafka
-  su -c "cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys" kafka
-  su -c "chmod 0600 ~/.ssh/authorized_keys" kafka
-
-  echo "ssh" > /etc/pdsh/rcmd_default
-
   ${ATLAS_SCRIPTS}/atlas-kafka-setup.sh
 
   touch ${KAFKA_HOME}/.setupDone
 fi
 
-su -c "cd ${KAFKA_HOME} && CLASSPATH=${KAFKA_HOME}/config ./bin/kafka-server-start.sh config/server.properties" kafka
+cd ${KAFKA_HOME} && CLASSPATH=${KAFKA_HOME}/config ./bin/kafka-server-start.sh config/server.properties

@@ -74,6 +74,7 @@ jobs:
           claude_args: |
             --model claude-sonnet-4-6
             --max-turns 40
+            --allowedTools "Bash(git:*),Bash(gh:*),Read,Glob,Grep"
           prompt: |
             You are a fork maintenance analyst for the Alcyone project (Apache Atlas fork with PostgreSQL backend fixes).
 

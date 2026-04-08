@@ -16,7 +16,6 @@
 
 FROM atlas-base:latest
 
-ARG ATLAS_BACKEND
 ARG ATLAS_SERVER_JAVA_VERSION
 ARG ATLAS_VERSION
 ARG TARGETARCH
@@ -30,16 +29,21 @@ COPY ./dist/apache-atlas-${ATLAS_VERSION}-server.tar.gz /home/atlas/dist/
 RUN tar xfz /home/atlas/dist/apache-atlas-${ATLAS_VERSION}-server.tar.gz --directory=/opt/ && \
     ln -s /opt/apache-atlas-${ATLAS_VERSION} ${ATLAS_HOME} && \
     rm -f /home/atlas/dist/apache-atlas-${ATLAS_VERSION}-server.tar.gz && \
-    mkdir -p /var/run/atlas /var/log/atlas /home/atlas/data ${ATLAS_HOME}/hbase/conf && \
+    mkdir -p /var/run/atlas /var/log/atlas /home/atlas/data && \
     rm -rf ${ATLAS_HOME}/logs && \
     ln -s /var/log/atlas ${ATLAS_HOME}/logs && \
     ln -s /home/atlas/data ${ATLAS_HOME}/data && \
     chown -R atlas:atlas ${ATLAS_HOME}/ /var/run/atlas/ /var/log/atlas/
 
-COPY ./scripts/hbase-site.xml ${ATLAS_HOME}/hbase/conf/
-
 # tools not included in server tarball
 COPY ./dist/tools/ ${ATLAS_HOME}/tools/
+
+# expand WAR and add repair tool to classpath
+RUN mkdir -p ${ATLAS_HOME}/server/webapp/atlas && \
+    cd ${ATLAS_HOME}/server/webapp/atlas && \
+    jar xf ${ATLAS_HOME}/server/webapp/atlas.war && \
+    cp ${ATLAS_HOME}/tools/atlas-index-repair/atlas-index-repair-tool-*.jar \
+       ${ATLAS_HOME}/server/webapp/atlas/WEB-INF/lib/
 
 VOLUME /home/atlas/data
 

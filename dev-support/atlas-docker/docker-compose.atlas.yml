@@ -21,8 +21,6 @@ services:
     depends_on:
       atlas-backend:
         condition: service_healthy
-      atlas-kafka:
-        condition: service_started
       atlas-solr:
         condition: service_started
       atlas-zk:
@@ -38,11 +36,6 @@ services:
     extends:
       service: ${ATLAS_BACKEND}
       file: docker-compose.atlas-backend.yml
-
-  atlas-kafka:
-    extends:
-      service: atlas-kafka
-      file: docker-compose.atlas-common.yml
 
   atlas-solr:
     extends:

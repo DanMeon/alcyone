@@ -163,11 +163,6 @@
         </dependency>
         <dependency>
             <groupId>org.apache.atlas</groupId>
-            <artifactId>atlas-dashboard</artifactId>
-            <type>war</type>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.atlas</groupId>
             <artifactId>atlas-dashboardv2</artifactId>
             <type>war</type>
         </dependency>
@@ -509,10 +504,6 @@
                     <overlays>
                         <overlay>
                             <groupId>org.apache.atlas</groupId>
-                            <artifactId>atlas-dashboard</artifactId>
-                        </overlay>
-                        <overlay>
-                            <groupId>org.apache.atlas</groupId>
                             <artifactId>atlas-dashboardv2</artifactId>
                         </overlay>
                         <overlay>
@@ -760,7 +751,6 @@
                                     <includes>
                                         <include>0000-Area0/0011-glossary_model.json</include>
                                         <include>0000-Area0/0010-base_model.json</include>
-                                        <include>1000-Hadoop/**</include>
                                     </includes>
                                 </resource>
                             </resources>
