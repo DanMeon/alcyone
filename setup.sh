@@ -120,18 +120,18 @@ case "$COMMAND" in
     download)
         download_archives
         ;;
-    build)
-        build_images
-        ;;
-    rebuild)
-        MAVEN_GOAL="verify" build_images
-        ;;
-    all)
-        download_archives
-        build_images
+    build|rebuild|all)
+        echo "[ERROR] './setup.sh $COMMAND' is deprecated."
+        echo ""
+        echo "Use instead:"
+        echo "  just build          # Maven build (local, fast)"
+        echo "  just rebuild        # Maven incremental build"
+        echo "  ./build_push.sh arm # Docker images (local test)"
+        echo "  ./build_push.sh --push # Docker images (remote deploy)"
+        exit 1
         ;;
     *)
-        echo "Usage: ./setup.sh [download|build|rebuild|all]"
+        echo "Usage: ./setup.sh download"
         exit 1
         ;;
 esac

@@ -231,7 +231,10 @@ public class AuditsWriter {
                 return;
             }
 
-            updateReplicationAttribute((replicationOptionState && !skipUpdateReplicationAttr), sourceServerName, sourceServerFullName, entityGuids, Constants.ATTR_NAME_REPLICATED_FROM, result.getExportResult().getChangeMarker());
+            AtlasExportResult exportResult  = result.getExportResult();
+            long              changeMarker   = exportResult != null ? exportResult.getChangeMarker() : 0L;
+
+            updateReplicationAttribute((replicationOptionState && !skipUpdateReplicationAttr), sourceServerName, sourceServerFullName, entityGuids, Constants.ATTR_NAME_REPLICATED_FROM, changeMarker);
         }
 
         public void add(String userName, String sourceCluster, long startTime, long endTime, Set<String> entityGuids) throws AtlasBaseException {

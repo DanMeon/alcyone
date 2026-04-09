@@ -1,7 +1,7 @@
 # Alcyone — Apache Atlas 2.5.0 Fork
 # Usage: just <recipe>
 
-export JAVA_HOME := "/opt/homebrew/Cellar/openjdk@11/11.0.30/libexec/openjdk.jdk/Contents/Home"
+export JAVA_HOME := "/Library/Java/JavaVirtualMachines/zulu-8.jdk/Contents/Home"
 export MAVEN_OPTS := "-Xms1g -Xmx4g -XX:+UseG1GC -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m"
 
 skip_opts := "-DskipTests -Drat.skip=true -Dcheckstyle.skip=true -DskipDocs -Dmaven.javadoc.skip=true -Dmaven.source.skip=true"
@@ -13,8 +13,9 @@ atlas_version := "2.5.0"
 build:
     mvn clean verify -T 1C {{profile}} {{skip_opts}}
 
-# * 증분 빌드 (변경분만, 빠름)
+# * 증분 빌드 (변경분만, distro 재생성)
 rebuild:
+    rm -rf distro/target
     mvn verify -T 1C {{profile}} {{skip_opts}}
 
 # * 증분 빌드 + 오프라인 (의존성 캐시된 후, 가장 빠름)

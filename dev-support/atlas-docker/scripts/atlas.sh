@@ -78,8 +78,20 @@ fi
 # ensure atlas user owns data directory (volume may be root-owned)
 chown -R atlas:atlas /home/atlas/data
 
+# ATLAS_SERVER_HEAP is read directly by atlas_start.py from environment
+# (set via docker-compose environment block, no atlas-env.sh modification needed)
+
 su -c "cd ${ATLAS_HOME}/bin && ./atlas_start.py" atlas
-ATLAS_PID=`ps -ef  | grep -v grep | grep -i "org.apache.atlas.Atlas" | awk '{print $2}'`
+ATLAS_PID=$(ps -ef | grep -v grep | grep -i "org.apache.atlas.Atlas" | awk '{print $2}')
+
+if [ -z "$ATLAS_PID" ]; then
+  echo "ERROR: Atlas JVM process not found after startup"
+  exit 1
+fi
+
+# forward SIGTERM to Atlas JVM and wait for graceful shutdown
+trap 'kill -TERM $ATLAS_PID 2>/dev/null; while kill -0 $ATLAS_PID 2>/dev/null; do sleep 1; done' SIGTERM SIGINT
 
 # stream application log to stdout so docker logs can capture it
-tail --pid=$ATLAS_PID -f ${ATLAS_HOME}/logs/application.log
+tail --pid=$ATLAS_PID -f ${ATLAS_HOME}/logs/application.log &
+wait $!
